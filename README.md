@@ -7,11 +7,11 @@
 
 ## <a id="introduction"></a>Introduction
 
-This plugin aims to bring GoogleDocs-style comments to vim.
+This plugin aims to bring GoogleDocs-style comments to Neovim.
 
 ![demo](./demo.gif)
 
-It has only been tested on Neovim version 0.6.1 on Mac OS. It will not work in Vim.
+It has only been tested in Neovim version 0.6.1 on Mac OS. It will not work in Vim.
 
 ## <a id="useage"></a>Useage & Configuration
 
