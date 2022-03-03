@@ -27,12 +27,18 @@ This plugin does not remap any keys by default.
 
 Comments are stored in a plaintext file in the same directory as the file they reference and are named according to the convention `.[name of original file]_comments`. This plugin should not create a comment file until you actually make a comment.
 
-Doc Comments provides the following variables for customization: g:DocCommentsHighlightGroup, the highlight group for commented text (defaults to "Underlined"); g:DocCommentsPreviewHeight, the height of the window to display comments (defaults to 10); and g:DocCommentsPreviewWidth, the width of the window to display coments (defaults to 55).
+Doc Comments provides the following variables for customization: `g:DocCommentsHighlightGroup`, the highlight group for commented text (defaults to "Underlined"); `g:DocCommentsPreviewHeight`, the height of the window to display comments (defaults to 10); and `g:DocCommentsPreviewWidth`, the width of the window to display coments (defaults to 55).
 
-## <a id="installation"></a>installation
+## <a id="installation"></a>Installation
 
-[WHATEVER]
+Install manually or use Vim-Plug:
 
-## <a id="contributing"></a>contributing
+```
+Plug 'oxytocin/DocComments'
+```
+
+Other plugin managers will probably also work.
+
+## <a id="contributing"></a>Contributing
 
 Open to suggestions; this is my first vim plugin, so I am sure there is room for improvement. Please submit issues for bugs. Pull requests are welcome.
