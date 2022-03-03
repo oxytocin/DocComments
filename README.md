@@ -1,7 +1,7 @@
 # Doc Comments
 
 - [Introduction](#introduction)
-- [Useage & Configuration](#usage)
+- [Usage & Configuration](#usage)
 - [Installation](#installation)
 - [Contributing](#contributing)
 
@@ -13,7 +13,7 @@ This plugin aims to bring GoogleDocs-style comments to Neovim.
 
 It has only been tested in Neovim version 0.6.1 on Mac OS. It will not work in Vim.
 
-## <a id="useage"></a>Useage & Configuration
+## <a id="usage"></a>Usage & Configuration
 
 This plugin defines three commands: `MakeComment`, `GetComment`, and `DeleteComment`. `MakeComment` is used in visual mode to add a comment to the selected text, `GetComment` gets the comment under or before the cursor, and `DeleteComment` deletes the comment under or before the cursor. Example mappings:
 
