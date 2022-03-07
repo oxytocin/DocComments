@@ -39,6 +39,14 @@ Plug 'oxytocin/DocComments'
 
 Other plugin managers will probably also work.
 
+The python package `neovim` is also needed:
+
+```
+pip install neovim
+```
+
+Make sure you run `UpdateRemotePlugins` in neovim after.
+
 ## <a id="contributing"></a>Contributing
 
 Open to suggestions; this is my first vim plugin, so I am sure there is room for improvement. Please submit issues for bugs. Pull requests are welcome.
