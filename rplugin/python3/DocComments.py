@@ -68,6 +68,9 @@ class Main(object):
     def make_comment(self, rng):  # accept range but ignore it to avoid errors
         self.update_file_names()
         start_row, start_col = self.nvim.api.buf_get_mark(0, "<")
+        if start_row == 0 and start_col == 0:
+            self.nvim.command(f'echo "No text selected"')
+            return
         start_row -= 1
         end_row, end_col = self.nvim.api.buf_get_mark(0, ">")
         if end_col == 2147483647:  # came from visual line mode
