@@ -34,18 +34,16 @@ Doc Comments uses the following variables for customization: `g:DocCommentsHighl
 Install manually or use Vim-Plug:
 
 ```
-Plug 'oxytocin/DocComments'
+Plug 'oxytocin/DocComments', { 'do': 'UpdateRemotePlugins' } 
 ```
 
-Other plugin managers will probably also work.
+Other plugin managers will probably also work, but remember to run `UpdateRemotePlugins` after installing.
 
-The python package `neovim` is also needed:
+Requires the Python package `Neovim`:
 
 ```
 pip install neovim
 ```
-
-Make sure you run `UpdateRemotePlugins` in neovim after.
 
 ## <a id="contributing"></a>Contributing
 
