@@ -153,7 +153,17 @@ class Main(object):
             comments = self._return_comments_dict_from_file()
             comment_text = comments[str(mark[0])]["text"]
             self.nvim.api.put([comment_text], "", False, False)
-            self.nvim.api.buf_set_option(buf, "modifiable", False)
+            self.nvim.command(f"autocmd BufLeave <buffer> exec \"UpdateCommentText {buf.handle} {mark[0]}\"")
+
+    @neovim.command("UpdateCommentText", nargs=1)
+    def update_comment_text(self, args):
+        bufnum_str, mark_id = args[0].split(" ")
+        lines = self.nvim.api.buf_get_lines(int(bufnum_str), 0, -1, False)
+        joined_lines = "\n".join(lines)
+        comments = self._return_comments_dict_from_file()
+        comments[mark_id]["text"] = joined_lines
+        with open(self.comments_file, "w") as f:
+            f.write(json.dumps(comments))
 
     @neovim.command("UpdateMarkLocations")
     def update_mark_locations(self):
