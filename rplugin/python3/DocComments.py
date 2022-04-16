@@ -1,6 +1,5 @@
 import neovim
 import json
-import random
 import os
 
 @neovim.plugin
@@ -21,6 +20,10 @@ class Main(object):
             except neovim.pynvim.api.common.NvimError:
                 setattr(self, attr_name, default)
         self.load_comments()
+        # buffer is made unmodifiable in DocComments.vim if a comment file
+        # exists because modifying text before extmarks are placed results in
+        # incorrect placement. Now that extmarks ARE placed, we can allow modifications.
+        self.nvim.command("set modifiable")
 
     @neovim.command("UpdateFileNames")
     def update_file_names(self):
@@ -78,9 +81,7 @@ class Main(object):
             end_col = len(line)-1
         end_row -= 1
         end_col += 1
-        mark_id = random.randint(0, 9223372036854775807)
         options = {
-                "id": mark_id,
                 "end_row": end_row,
                 "end_col": end_col,
                 "hl_group": self.highlight_group
@@ -91,7 +92,7 @@ class Main(object):
         self.nvim.api.call_function("inputrestore", [])
         if comment_text == "":  # user hit <esc> or entered nothing
             return
-        self.nvim.api.buf_set_extmark(0, self.ns, start_row, start_col, options)
+        mark_id = self.nvim.api.buf_set_extmark(0, self.ns, start_row, start_col, options)
         
         # save mark to file
         comments = self._return_comments_dict_from_file()
