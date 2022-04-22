@@ -25,9 +25,12 @@ nnoremap <leader>gc :GetComment<cr>
 
 This plugin does not remap any keys by default.
 
-Comments are stored in a plaintext file in the same directory as the file they reference and are named according to the convention `.[name of original file]_comments`. This plugin should not create a comment file until you actually make a comment.
+Doc Comments uses the following variables for customization:
 
-Doc Comments uses the following variables for customization: `g:DocCommentsHighlightGroup`, the highlight group for commented text (defaults to "Underlined"); `g:DocCommentsPreviewHeight`, the height of the window to display comments (defaults to 10); and `g:DocCommentsPreviewWidth`, the width of the window to display comments (defaults to 55).
+- `g:DocCommentsHighlightGroup`, the highlight group for commented text (defaults to "Underlined");
+- `g:DocCommentsPreviewHeight`, the height of the window to display comments (defaults to 10);
+- `g:DocCommentsPreviewWidth`, the width of the window to display comments (defaults to 55);
+- `g:DocCommentsPath`, the path to store/look for comment files. By default, comment files will be stored in the same directory as the original file. Comment files are named according to the convention `.[name of original file]_comments`.
 
 ## <a id="installation"></a>Installation
 

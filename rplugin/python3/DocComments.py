@@ -6,41 +6,48 @@ import os
 class Main(object):
     def __init__(self, nvim):
         self.nvim = nvim
-        self.ns = self.nvim.api.create_namespace("DocComments") 
-        self.buffer_name = self.nvim.api.buf_get_name(0)
-        head, tail = os.path.split(self.buffer_name)
-        comments_filename = f".{tail}_comments"
-        self.comments_file = os.path.join(head, comments_filename)
-        option_names = ("DocCommentsPreviewHeight", "DocCommentsPreviewWidth", "DocCommentsHighlightGroup")
-        attr_names = ("preview_height", "preview_width", "highlight_group")
-        defaults = (10, 55, "Underlined")
+        option_names = ("DocCommentsPreviewHeight", "DocCommentsPreviewWidth",
+                        "DocCommentsHighlightGroup", "DocCommentsPath")
+        attr_names = ("preview_height", "preview_width",
+                      "highlight_group", "comments_file_head")
+        defaults = (10, 55, "Underlined", None)
         for option_name, attr_name, default in zip(option_names, attr_names, defaults):
             try:
                 setattr(self, attr_name, self.nvim.api.get_var(option_name))
             except neovim.pynvim.api.common.NvimError:
                 setattr(self, attr_name, default)
+        self.ns = self.nvim.api.create_namespace("DocComments") 
+        self.set_comments_path()
         self.load_comments()
         # buffer is made unmodifiable in DocComments.vim if a comment file
         # exists because modifying text before extmarks are placed results in
         # incorrect placement. Now that extmarks ARE placed, we can allow modifications.
         self.nvim.command("set modifiable")
 
-    @neovim.command("UpdateFileNames")
-    def update_file_names(self):
+    @neovim.command("SetCommentsPath")
+    def set_comments_path(self):
         buffer_name = self.nvim.api.buf_get_name(0)
-        if not os.path.isfile(buffer_name) or buffer_name == self.buffer_name:
-            return
         self.buffer_name = buffer_name
-        head, tail = os.path.split(self.buffer_name)
-        comments_filename = f".{tail}_comments"
-        self.comments_file = os.path.join(head, comments_filename)
+        buffer_head, buffer_tail = os.path.split(self.buffer_name)
+        self.comments_filename = f".{buffer_tail}_comments"
+        if not self.comments_file_head:
+            self.comments_file = os.path.join(buffer_head, self.comments_filename)
+        else:
+            subdir_name = buffer_head.replace("/", "-")
+            self.comments_file = os.path.join(self.comments_file_head, subdir_name, self.comments_filename)
+            try:
+                os.mkdir(os.path.split(self.comments_file)[0])
+            except FileExistsError:
+                pass
+            except FileNotFoundError:
+                self.nvim.api.err_write("Couldn't find directory specified in g:DocCommentsPath\n")
 
     @neovim.command("LoadComments")
     def load_comments(self):
         buffer_name = self.nvim.api.buf_get_name(0)
         if not os.path.isfile(buffer_name):
             return
-        self.update_file_names()
+        self.set_comments_path()
         marks = self.nvim.api.buf_get_extmarks(0, self.ns, 0, -1, {"details": True})
         for mark in marks:
             self.nvim.api.buf_del_extmark(0, self.ns, mark[0])
@@ -69,7 +76,7 @@ class Main(object):
 
     @neovim.command("MakeComment", range=True)
     def make_comment(self, rng):  # accept range but ignore it to avoid errors
-        self.update_file_names()
+        self.set_comments_path()
         start_row, start_col = self.nvim.api.buf_get_mark(0, "<")
         if start_row == 0 and start_col == 0:
             self.nvim.command(f'echo "No text selected"')
@@ -115,7 +122,7 @@ class Main(object):
 
     @neovim.command("DeleteComment")
     def delete_comment(self):
-        self.update_file_names()
+        self.set_comments_path()
         self.update_mark_locations()
         mark = self._get_mark_before_cursor()
         if not mark:
@@ -129,7 +136,7 @@ class Main(object):
 
     @neovim.command("GetComment")
     def get_comment(self):
-        self.update_file_names()
+        self.set_comments_path()
         self.update_mark_locations()
         mark = self._get_mark_before_cursor()
         if not mark:
@@ -168,7 +175,7 @@ class Main(object):
 
     @neovim.command("UpdateMarkLocations")
     def update_mark_locations(self):
-        self.update_file_names()
+        self.set_comments_path()
         marks = self.nvim.api.buf_get_extmarks(0, self.ns, 0, -1, {"details": True})
         comments = self._return_comments_dict_from_file()
         if comments == {}:  # user never set a comment
@@ -186,3 +193,4 @@ class Main(object):
             comments[str(mark_id)]["end_col"] = end_col
         with open(self.comments_file, "w") as f:
             f.write(json.dumps(comments))
+
