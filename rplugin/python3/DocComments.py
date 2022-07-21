@@ -23,6 +23,11 @@ class Main(object):
         # exists because modifying text before extmarks are placed results in
         # incorrect placement. Now that extmarks ARE placed, we can allow modifications.
         self.nvim.command("set modifiable")
+        # we set the below to "visual" for MakeCommentVisual, "normal" for
+        # MakeCommentNormal. I'd prefer to pass this as an argument to
+        # MakeCommentFunc instead of have a class attribute, but passing args
+        # when using operatorfunc is not as straightforward as one would think
+        self.came_from_mode = None
 
     @neovim.command("SetCommentsPath")
     def set_comments_path(self):
@@ -74,16 +79,38 @@ class Main(object):
                 ret = {}
             return ret
 
+    @neovim.command("MakeCommentNormal", range=True)
+    def make_comment_normal(self, _):  # accept range but ignore it to avoid errors
+        self.came_from_mode = "normal"
+        self.nvim.command("set opfunc=MakeCommentFunc")
+        self.nvim.command("call feedkeys('g@')")
+
+    @neovim.command("MakeCommentVisual", range=True)
+    def make_comment_visual(self, _):  # accept range but ignore it to avoid errors
+        self.came_from_mode = "visual"
+        self.nvim.command("call MakeCommentFunc()")
+
+    # Just putting this here for backward compatibility
     @neovim.command("MakeComment", range=True)
-    def make_comment(self, rng):  # accept range but ignore it to avoid errors
+    def make_comment(self, _):  # accept range but ignore it to avoid errors
+        self.came_from_mode = "visual"
+        self.nvim.command("call MakeCommentFunc()")
+
+    @neovim.function("MakeCommentFunc", range=True)
+    def make_comment_func(self, *_):
         self.set_comments_path()
-        start_row, start_col = self.nvim.api.buf_get_mark(0, "<")
+        start_mark = "<" if self.came_from_mode == "visual" else "["
+        end_mark = ">" if self.came_from_mode == "visual" else "]"
+        start_row, start_col = self.nvim.api.buf_get_mark(0, start_mark)
         if start_row == 0 and start_col == 0:
             self.nvim.command(f'echo "No text selected"')
             return
         start_row -= 1
-        end_row, end_col = self.nvim.api.buf_get_mark(0, ">")
-        if end_col == 2147483647:  # came from visual line mode
+        end_row, end_col = self.nvim.api.buf_get_mark(0, end_mark)
+        # the end col is 2147483647 if the user came from visual line mode.
+        # This may also may happen from normal mode if motion goes to end of
+        # line, I'm not sure. This check shouldn't cause problems either way.
+        if end_col == 2147483647:
             line = self.nvim.api.buf_get_lines(0, start_row, end_row, True)[0]
             end_col = len(line)-1
         end_row -= 1
@@ -110,6 +137,7 @@ class Main(object):
             }
         with open(self.comments_file, "w") as f:
             f.write(json.dumps(comments))
+
 
     def _get_mark_before_cursor(self):
         cursor_pos = self.nvim.api.win_get_cursor(0)

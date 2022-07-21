@@ -15,15 +15,18 @@ This plugin has been tested on Neovim 0.7.0 and may not work on earlier versions
 
 ## <a id="usage"></a>Usage & Configuration
 
-This plugin defines three commands: `MakeComment`, `GetComment`, and `DeleteComment`. `MakeComment` is used in visual mode to add a comment to the selected text, `GetComment` gets the comment under or before the cursor, and `DeleteComment` deletes the comment under or before the cursor. Example mappings:
+This plugin defines four commands: `MakeCommentVisual`, `MakeCommentNormal`, `GetComment`, and `DeleteComment`. `MakeCommentVisual` creates a comment on a visual selection, while `MakeCommentNormal` does the same but behaves like an operator. (For example, `:MakeCommentNormal<cr>iw` comments the "inner word" text object.) `GetComment` gets the comment under or before the cursor, and `DeleteComment` deletes the comment under or before the cursor. Example mappings:
 
 ```
-vnoremap c :MakeComment<cr>
+vnoremap c :MakeCommentVisual<cr>
+nnoremap yc :MakeCommentNormal<cr>
 nnoremap <leader>dc :DeleteComment<cr>
 nnoremap <leader>gc :GetComment<cr>
 ```
 
 This plugin does not remap any keys by default.
+
+> **NOTE**: The command `MakeComment` will behave like `MakeCommentVisual` to maintain backward compatibility with previous versions of this plugin, which only worked in visual mode.
 
 Doc Comments uses the following variables for customization:
 
