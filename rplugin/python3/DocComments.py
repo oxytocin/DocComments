@@ -6,12 +6,12 @@ import os
 class Main(object):
     def __init__(self, nvim):
         self.nvim = nvim
-        option_names = ("DocCommentsPreviewHeight", "DocCommentsPreviewWidth",
+        option_names = ("DocCommentsEditWindowHeight", "DocCommentsEditWindowWidth",
                         "DocCommentsHighlightGroup", "DocCommentsPath",
-                        "DocCommentsTooltipHeight", "DocCommentsTooltipWidth")
+                        "DocCommentsPreviewpHeight", "DocCommentsPreviewWidth")
         attr_names = ("preview_height", "preview_width", "highlight_group",
                       "comments_file_head", "tooltip_height", "tooltip_width")
-        defaults = (10, 55, "Underlined", None, 1, 1)
+        defaults = (10, 55, "Underlined", None, 5, 50)
         for option_name, attr_name, default in zip(option_names, attr_names, defaults):
             try:
                 setattr(self, attr_name, self.nvim.api.get_var(option_name))
@@ -29,7 +29,8 @@ class Main(object):
         # MakeCommentFunc instead of have a class attribute, but passing args
         # when using operatorfunc is not as straightforward as one would think
         self.came_from_mode = None
-        # similar thing as above
+        # These also have to be global because you can't really pass arguments
+        # to autocmd functions
         self.floating_win_handle = None
         self.close_floating_win_au_id = None
 
@@ -91,12 +92,6 @@ class Main(object):
 
     @neovim.command("MakeCommentVisual", range=True)
     def make_comment_visual(self, _):  # accept range but ignore it to avoid errors
-        self.came_from_mode = "visual"
-        self.nvim.command("call MakeCommentFunc()")
-
-    # Just putting this here for backward compatibility
-    @neovim.command("MakeComment", range=True)
-    def make_comment(self, _):  # accept range but ignore it to avoid errors
         self.came_from_mode = "visual"
         self.nvim.command("call MakeCommentFunc()")
 
@@ -166,8 +161,16 @@ class Main(object):
         with open(self.comments_file, "w") as f:
             f.write(json.dumps(comments))
 
+    @neovim.command("EditComment")
+    def get_comment_win(self):
+        self.get_comment(tooltip=False)
+
     @neovim.command("GetComment")
-    def get_comment(self):
+    def get_comment_tooltip(self):
+        self.get_comment(tooltip=True)
+
+    @neovim.function("GetCommentFunction")
+    def get_comment(self, tooltip):
         self.set_comments_path()
         self.update_mark_locations()
         mark = self._get_mark_before_cursor()
@@ -175,27 +178,29 @@ class Main(object):
             return
         if mark[2] >= mark[3]["end_col"]:  # all text inside mark was deleted
             self.nvim.api.buf_del_extmark(0, self.ns, mark[0])
-            self.get_comment()
+            self.get_comment(tooltip=tooltip)
         else:  # got our mark!
             win_width = self.nvim.api.win_get_width(0)
             win_height = self.nvim.api.call_function("winheight", [0])
             window_config = {
-                    "relative": "cursor",
-                    "row": 1,
-                    "col": 1,
-                    "width": self.tooltip_width,
-                    "height": self.tooltip_height,
+                    "relative": "cursor" if tooltip else "win",
+                    "row": 1 if tooltip else int((win_height/2) - (self.preview_height/2)),
+                    "col": 1 if tooltip else int((win_width/2) - (self.preview_width/2)),
+                    "width": self.tooltip_width if tooltip else self.preview_width,
+                    "height": self.tooltip_height if tooltip else self.preview_height,
+                    "border": "none" if tooltip else "single",
+                    "focusable": not tooltip,
                     "style": "minimal",
                     }
             main_win = self.nvim.api.get_current_win()
             comment_buf = self.nvim.api.create_buf(False, True)
-            self.floating_win_handle = self.nvim.api.open_win(comment_buf, False, window_config)
+            self.floating_win_handle = self.nvim.api.open_win(comment_buf, True, window_config)
             comments = self._return_comments_dict_from_file()
             comment_text = comments[str(mark[0])]["text"]
-            self.nvim.api.set_current_win(self.floating_win_handle)
             self.nvim.api.put([comment_text], "", False, False)
-            self.nvim.api.set_current_win(main_win)
-            self.close_floating_win_au_id = self.nvim.api.create_autocmd("CursorMoved", {"callback": "g:DeleteFloat"})
+            if tooltip:
+                self.nvim.api.set_current_win(main_win)
+                self.close_floating_win_au_id = self.nvim.api.create_autocmd("CursorMoved", {"callback": "g:DeleteFloat"})
 
     @neovim.function("DeleteFloat")
     def delete_float(self, *_):
