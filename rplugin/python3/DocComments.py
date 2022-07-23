@@ -201,6 +201,9 @@ class Main(object):
             if tooltip:
                 self.nvim.api.set_current_win(main_win)
                 self.close_floating_win_au_id = self.nvim.api.create_autocmd("CursorMoved", {"callback": "g:DeleteFloat"})
+            else:
+                self.nvim.command(f"autocmd BufLeave <buffer> exec \"UpdateCommentText {comment_buf.handle} {mark[0]}\"")
+
 
     @neovim.function("DeleteFloat")
     def delete_float(self, *_):
