@@ -40,8 +40,7 @@ Doc Comments uses the following variables for customization:
 - `g:DocCommentsHighlightGroup`, the highlight group for commented text (defaults to "Underlined");
 - `g:DocCommentsEditWindowHeight`, the height of the `EditComment` window (defaults to 10);
 - `g:DocCommentsEditWindowWidth`, the width of the `EditComment` window (defaults to 55);
-- `g:DocCommentsPreviewWidth`, the width of the `GetComment` window (defaults to 5);
-- `g:DocCommentsPreviewHeight`, the height of the `GetComment` window (defaults to 50);
+- `g:DocCommentsPreviewWidth`, the max width of the `GetComment` window (defaults to 50. Height will change to accomodate the text);
 - `g:DocCommentsPath`, the path to store/look for comment files. By default, comment files will be stored in the same directory as the original file. Comment files are named according to the convention `.[name of original file]_comments`.
 
 ## <a id="installation"></a>Installation
