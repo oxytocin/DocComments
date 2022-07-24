@@ -187,42 +187,50 @@ class Main(object):
         if mark[2] >= mark[3]["end_col"]:  # all text inside mark was deleted
             self.nvim.api.buf_del_extmark(0, self.ns, mark[0])
             self.get_comment(tooltip=tooltip)
-        else:  # got our mark!
-            win_width = self.nvim.api.win_get_width(0)
-            win_height = self.nvim.api.call_function("winheight", [0])
-            comments = self._return_comments_dict_from_file()
-            comment_text = comments[str(mark[0])]["text"]
-            if tooltip:
-                w, h = calc_tooltip_size_from_text(comment_text)
-            else:
-                w, h = self.edit_win_width, self.edit_win_height
-            window_config = {
-                    "relative": "cursor" if tooltip else "win",
-                    "row": 1 if tooltip else int((win_height/2) - (self.edit_win_height/2)),
-                    "col": 1 if tooltip else int((win_width/2) - (self.edit_win_width/2)),
-                    "width": w,
-                    "height": h, 
-                    "border": "none" if tooltip else "single",
-                    "focusable": not tooltip,
-                    "style": "minimal",
-                    }
-            main_win = self.nvim.api.get_current_win()
-            comment_buf = self.nvim.api.create_buf(False, True)
-            self.floating_win_handle = self.nvim.api.open_win(comment_buf, True, window_config)
-            self.nvim.api.put([comment_text], "", False, False)
-            if tooltip:
-                self.nvim.api.set_current_win(main_win)
-                self.close_floating_win_au_id = self.nvim.api.create_autocmd(
-                    ["CursorMoved", "CmdlineEnter"], {"callback": "g:CloseTooltip"}
-                )
-            else:
-                self.nvim.command(f"autocmd BufLeave <buffer> exec \"UpdateCommentText {comment_buf.handle} {mark[0]}\"")
+            return
+        win_width = self.nvim.api.win_get_width(0)
+        win_height = self.nvim.api.call_function("winheight", [0])
+        comments = self._return_comments_dict_from_file()
+        comment_text = comments[str(mark[0])]["text"]
+        if tooltip:
+            w, h = calc_tooltip_size_from_text(comment_text)
+        else:
+            w, h = self.edit_win_width, self.edit_win_height
+        window_config = {
+                "relative": "cursor" if tooltip else "win",
+                "row": 1 if tooltip else int((win_height/2) - (self.edit_win_height/2)),
+                "col": 1 if tooltip else int((win_width/2) - (self.edit_win_width/2)),
+                "width": w,
+                "height": h,
+                "border": "none" if tooltip else "single",
+                "focusable": not tooltip,
+                "style": "minimal",
+                }
+        main_win = self.nvim.api.get_current_win()
+        comment_buf = self.nvim.api.create_buf(False, True)
+        self.floating_win_handle = self.nvim.api.open_win(comment_buf, True, window_config)
+        self.nvim.api.put([comment_text], "", False, False)
+        if tooltip:
+            self.nvim.api.set_current_win(main_win)
+            self.close_floating_win_au_id = self.nvim.api.create_autocmd(
+                ["CursorMoved", "CmdlineEnter"], {"callback": "g:CloseTooltip"}
+            )
+        else:
+            self.nvim.command(f"autocmd BufLeave <buffer> exec \"UpdateCommentText {comment_buf.handle} {mark[0]}\"")
 
 
     @neovim.function("CloseTooltip")
     def close_tooltip(self, *_):
-        self.nvim.api.win_close(self.floating_win_handle, True)
-        self.nvim.api.del_autocmd(self.close_floating_win_au_id)
+        # Even though this au immediately deletes itself, it still somehow can
+        # run twice if cursor is moved and command line is entered at the same
+        # time (?), for example when opening a floaterm window. This triggers
+        # an error because it tries to close a window that has already closed.
+        try:
+            self.nvim.api.win_close(self.floating_win_handle, True)
+        except neovim.pynvim.api.common.NvimError:
+            pass
+        finally:
+            self.nvim.api.del_autocmd(self.close_floating_win_au_id)
 
     @neovim.command("UpdateCommentText", nargs=1)
     def update_comment_text(self, args):
