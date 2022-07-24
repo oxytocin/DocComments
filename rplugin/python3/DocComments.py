@@ -212,13 +212,15 @@ class Main(object):
             self.nvim.api.put([comment_text], "", False, False)
             if tooltip:
                 self.nvim.api.set_current_win(main_win)
-                self.close_floating_win_au_id = self.nvim.api.create_autocmd(["CursorMoved", "CmdlineEnter"], {"callback": "g:DeleteFloat"})
+                self.close_floating_win_au_id = self.nvim.api.create_autocmd(
+                    ["CursorMoved", "CmdlineEnter"], {"callback": "g:CloseTooltip"}
+                )
             else:
                 self.nvim.command(f"autocmd BufLeave <buffer> exec \"UpdateCommentText {comment_buf.handle} {mark[0]}\"")
 
 
-    @neovim.function("DeleteFloat")
-    def delete_float(self, *_):
+    @neovim.function("CloseTooltip")
+    def close_tooltip(self, *_):
         self.nvim.api.win_close(self.floating_win_handle, True)
         self.nvim.api.del_autocmd(self.close_floating_win_au_id)
 
