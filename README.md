@@ -21,7 +21,7 @@ This plugin defines five commands:
 - `MakeCommentNormal`, which creates a comment on a motion or text object (ex. `:MakeCommentNormal<cr>iw` comments the "inner word" text object);
 - `GetComment`, which displays the comment under or before the cursor as a tooltip;
 - `EditComment`, which displays the comment under or before the cursor in a floating window and allows edits;
-- `DeleteComment`, which deletees the comment under or before the cursor.
+- `DeleteComment`, which deletes the comment under or before the cursor.
 
 Example mappings:
 
