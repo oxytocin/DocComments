@@ -8,10 +8,10 @@ class Main(object):
         self.nvim = nvim
         option_names = ("DocCommentsEditWindowHeight", "DocCommentsEditWindowWidth",
                         "DocCommentsHighlightGroup", "DocCommentsPath",
-                        "DocCommentsPreviewWidth")
+                        "DocCommentsPreviewWidth", "DocCommentsEchoComments")
         attr_names = ("edit_win_height", "edit_win_width", "highlight_group",
-                      "comments_file_head", "tooltip_width")
-        defaults = (10, 55, "Underlined", None, 50)
+                      "comments_file_head", "tooltip_width", "echo_comments")
+        defaults = (10, 55, "Underlined", None, 50, 0)
         for option_name, attr_name, default in zip(option_names, attr_names, defaults):
             try:
                 setattr(self, attr_name, self.nvim.api.get_var(option_name))
@@ -33,7 +33,8 @@ class Main(object):
         # to autocmd functions
         self.floating_win_handle = None
         self.close_floating_win_au_id = None
-        self.nvim.api.create_autocmd(["CursorMoved"], {"callback": "g:EchoComment"})
+        if self.echo_comments:
+            self.nvim.api.create_autocmd(["CursorMoved"], {"callback": "g:EchoComment"})
 
     @neovim.command("SetCommentsPath")
     def set_comments_path(self):

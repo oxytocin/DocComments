@@ -19,9 +19,9 @@ This plugin defines five commands:
 
 - `MakeCommentVisual`, which creates a comment on a visual mode selection;
 - `MakeCommentNormal`, which creates a comment on a motion or text object (ex. `:MakeCommentNormal<cr>iw` comments the "inner word" text object);
-- `GetComment`, which displays the comment under or before the cursor as a tooltip;
-- `EditComment`, which displays the comment under or before the cursor in a floating window and allows edits;
-- `DeleteComment`, which deletes the comment under or before the cursor.
+- `GetComment`, which displays the comment under the cursor as a tooltip;
+- `EditComment`, which displays the comment under the cursor in a floating window and allows edits;
+- `DeleteComment`, which deletes the comment under the cursor.
 
 Example mappings:
 
@@ -42,6 +42,7 @@ Doc Comments uses the following variables for customization:
 - `g:DocCommentsEditWindowWidth`, the width of the `EditComment` window (defaults to 55);
 - `g:DocCommentsPreviewWidth`, the max width of the `GetComment` window (defaults to 50. Height will change to accomodate the text);
 - `g:DocCommentsPath`, the path to store/look for comment files. By default, comment files will be stored in the same directory as the original file. Comment files are named according to the convention `.[name of original file]_comments`.
+- `g:DocCommentsEchoComments`, whether to echo comment text to the command line whenever the cursor enters a commented region (0 for no, 1 for yes. Defaults to 0.) Causes the plugin to read from disc every time the cursor is moved in a commented region; I haven't noticed a performance impact from this, but if you are very concerned about performance, you may prefer to keep this feature disabled.
 
 ## <a id="installation"></a>Installation
 
