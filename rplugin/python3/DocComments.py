@@ -33,6 +33,7 @@ class Main(object):
         # to autocmd functions
         self.floating_win_handle = None
         self.close_floating_win_au_id = None
+        self.nvim.api.create_autocmd(["CursorMoved"], {"callback": "g:EchoComment"})
 
     @neovim.command("SetCommentsPath")
     def set_comments_path(self):
@@ -138,12 +139,17 @@ class Main(object):
             f.write(json.dumps(comments))
 
 
-    def _get_mark_before_cursor(self):
+    def _get_mark_under_cursor(self):
         cursor_pos = self.nvim.api.win_get_cursor(0)
         cursor_pos[0] -= 1
         try:
             mark = self.nvim.api.buf_get_extmarks(0, self.ns, cursor_pos, [cursor_pos[0], 0], {"limit":1, "details": True})[0]
         except IndexError:
+            return None
+        mark_end_col = self.nvim.api.buf_get_extmark_by_id(
+            0, self.ns, mark[0], {"details": True}
+        )[2]["end_col"]
+        if cursor_pos[1] > mark_end_col - 1:
             return None
         return mark
 
@@ -151,7 +157,7 @@ class Main(object):
     def delete_comment(self):
         self.set_comments_path()
         self.update_mark_locations()
-        mark = self._get_mark_before_cursor()
+        mark = self._get_mark_under_cursor()
         if not mark:
             return
         mark_id = mark[0]
@@ -181,7 +187,7 @@ class Main(object):
 
         self.set_comments_path()
         self.update_mark_locations()
-        mark = self._get_mark_before_cursor()
+        mark = self._get_mark_under_cursor()
         if not mark:
             return
         if mark[2] >= mark[3]["end_col"]:  # all text inside mark was deleted
@@ -218,6 +224,14 @@ class Main(object):
         else:
             self.nvim.command(f"autocmd BufLeave <buffer> exec \"UpdateCommentText {comment_buf.handle} {mark[0]}\"")
 
+    @neovim.function("EchoComment")
+    def echo_comment(self, *_):
+        mark = self._get_mark_under_cursor()
+        if mark is None:
+            return
+        comments_dict = self._return_comments_dict_from_file()
+        comment_text = comments_dict[str(mark[0])]["text"]
+        self.nvim.command(f'echo "{comment_text}"')
 
     @neovim.function("CloseTooltip")
     def close_tooltip(self, *_):
