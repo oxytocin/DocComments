@@ -3,11 +3,11 @@
 - [Introduction](#introduction)
 - [Usage & Configuration](#usage)
 - [Installation](#installation)
-- [Contributing](#contributing)
+- [Docx Conversion](#conversion)
 
 ## <a id="introduction"></a>Introduction
 
-This plugin aims to bring GoogleDocs-style comments to Neovim.
+This plugin aims to bring GoogleDocs/Word-style comments to Neovim.
 
 ![demo](./demo.gif)
 
@@ -59,6 +59,6 @@ Requires the Python package `Neovim`:
 pip install neovim
 ```
 
-## <a id="contributing"></a>Contributing
+## <a id="conversion"></a>Docx Conversion
 
-Open to suggestions; this is my first vim plugin, so I am sure there is room for improvement. Please submit issues for bugs. Pull requests are welcome.
+Scripts to convert to/from commented docx files can be found at the [Doc Comments Conversion repository](https://github.com/oxytocin/Doc-Comments-Conversion).
