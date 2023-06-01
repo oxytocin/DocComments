@@ -191,7 +191,8 @@ class Main(object):
         _, comment_text = self._get_nearest_comment_id_and_text()
         if not comment_text:
             return
-        self.nvim.command(f'echo "{comment_text}"')
+        escaped_comment_text = comment_text.replace('"', '\\"')
+        self.nvim.command(f'echo "{escaped_comment_text}"')
 
     @neovim.function("GetCommentFunction")
     def get_comment(self, tooltip):
