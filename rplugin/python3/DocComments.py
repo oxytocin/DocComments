@@ -191,7 +191,7 @@ class Main(object):
         _, comment_text = self._get_nearest_comment_id_and_text()
         if not comment_text:
             return
-        escaped_comment_text = comment_text.replace('"', '\\"')
+        escaped_comment_text = comment_text.replace("\\", "\\\\").replace('"', '\\"')
         self.nvim.command(f'echo "{escaped_comment_text}"')
 
     @neovim.function("GetCommentFunction")
