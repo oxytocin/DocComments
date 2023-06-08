@@ -11,6 +11,10 @@ class Main(object):
                         "DocCommentsPreviewWidth")
         attr_names = ("edit_win_height", "edit_win_width", "highlight_group",
                       "comments_file_head", "tooltip_width")
+        # Below two lines are to stop language server from thinking these
+        # attributes were never assigned
+        self.edit_win_height = self.edit_win_width = self.tooltip_width = 0
+        self.highlight_group = self.comments_file_head = ""
         defaults = (10, 55, "Underlined", None, 50)
         for option_name, attr_name, default in zip(option_names, attr_names, defaults):
             try:
@@ -169,8 +173,32 @@ class Main(object):
     def get_comment_tooltip(self):
         self.get_comment(tooltip=True)
 
+    def _get_nearest_comment_id_and_text(self):
+        self.set_comments_path()
+        self.update_mark_locations()
+        mark = self._get_mark_before_cursor()
+        if not mark:
+            return None, None
+        if mark[2] >= mark[3]["end_col"]:  # all text inside mark was deleted
+            self.nvim.api.buf_del_extmark(0, self.ns, mark[0])
+            return self._get_nearest_comment_id_and_text()
+        comments = self._return_comments_dict_from_file()
+        comment_text = comments[str(mark[0])]["text"]
+        return mark[0], comment_text
+
+    @neovim.command("EchoComment")
+    def echo_comment(self):
+        _, comment_text = self._get_nearest_comment_id_and_text()
+        if not comment_text:
+            return
+        escaped_comment_text = comment_text.replace("\\", "\\\\").replace('"', '\\"')
+        self.nvim.command(f'echo "{escaped_comment_text}"')
+
     @neovim.function("GetCommentFunction")
     def get_comment(self, tooltip):
+        comment_id, comment_text = self._get_nearest_comment_id_and_text()
+        if not comment_id:
+            return
 
         def calc_tooltip_size_from_text(text):
             text_len = len(text)
@@ -179,19 +207,8 @@ class Main(object):
             height = int(text_len / self.edit_win_width) + 1
             return self.edit_win_width, height
 
-        self.set_comments_path()
-        self.update_mark_locations()
-        mark = self._get_mark_before_cursor()
-        if not mark:
-            return
-        if mark[2] >= mark[3]["end_col"]:  # all text inside mark was deleted
-            self.nvim.api.buf_del_extmark(0, self.ns, mark[0])
-            self.get_comment(tooltip=tooltip)
-            return
         win_width = self.nvim.api.win_get_width(0)
         win_height = self.nvim.api.call_function("winheight", [0])
-        comments = self._return_comments_dict_from_file()
-        comment_text = comments[str(mark[0])]["text"]
         if tooltip:
             w, h = calc_tooltip_size_from_text(comment_text)
         else:
@@ -216,8 +233,7 @@ class Main(object):
                 ["CursorMoved", "CmdlineEnter"], {"callback": "g:CloseTooltip"}
             )
         else:
-            self.nvim.command(f"autocmd BufLeave <buffer> exec \"UpdateCommentText {comment_buf.handle} {mark[0]}\"")
-
+            self.nvim.command(f"autocmd BufLeave <buffer> exec \"UpdateCommentText {comment_buf.handle} {comment_id}\"")
 
     @neovim.function("CloseTooltip")
     def close_tooltip(self, *_):
